@@ -1,0 +1,554 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Member {
+  id                String       @id @default(cuid())
+  firstName         String
+  lastName          String
+  email             String       @unique
+  phone             String?
+  dateOfBirth       DateTime?
+  addressLine1      String?
+  addressLine2      String?
+  city              String?
+  postcode          String?
+  emergencyName     String?
+  emergencyPhone    String?
+  notes             String?
+  status            MemberStatus @default(ACTIVE)
+  joinedAt          DateTime     @default(now())
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  bodyFatPercentage Decimal?     @db.Decimal(5, 2)
+  coachNotes        String?
+  consultationDate  DateTime?
+  currentWeightKg   Decimal?     @db.Decimal(6, 2)
+  goal              ClientGoal?
+  goalDescription   String?
+  heightCm          Decimal?     @db.Decimal(6, 2)
+  startingWeightKg  Decimal?     @db.Decimal(6, 2)
+  targetWeightKg    Decimal?     @db.Decimal(6, 2)
+  bookings          Booking[]
+  memberships       Membership[]
+  orders            Order[]
+  payments          Payment[]
+
+  @@index([lastName, firstName])
+  @@index([status])
+  @@index([goal])
+}
+
+model MembershipPlan {
+  id           String       @id @default(cuid())
+  name         String       @unique
+  description  String?
+  price        Decimal      @db.Decimal(10, 2)
+  durationDays Int
+  active       Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  buttonHref   String?      @default("/#contact")
+  buttonText   String?      @default("Enquire now")
+  featured     Boolean      @default(false)
+  imageUrl     String?
+  mostPopular  Boolean      @default(false)
+  showOnHome   Boolean      @default(true)
+  sortOrder    Int          @default(0)
+  memberships  Membership[]
+
+  @@index([active])
+  @@index([showOnHome, sortOrder])
+  @@index([featured])
+  @@index([mostPopular])
+}
+
+model Membership {
+  id        String           @id @default(cuid())
+  memberId  String
+  planId    String
+  status    MembershipStatus @default(ACTIVE)
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  member    Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  plan      MembershipPlan   @relation(fields: [planId], references: [id])
+
+  @@index([memberId])
+  @@index([planId])
+  @@index([status])
+  @@index([endDate])
+}
+
+model FitnessClass {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  durationMin Int
+  capacity    Int
+  active      Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  featured    Boolean        @default(false)
+  imageUrl    String?
+  publicPage  Boolean        @default(false)
+  showOnHome  Boolean        @default(false)
+  sortOrder   Int            @default(0)
+  sessions    ClassSession[]
+
+  @@index([active])
+  @@index([showOnHome, sortOrder])
+  @@index([publicPage])
+}
+
+model ClassSession {
+  id           String       @id @default(cuid())
+  classId      String
+  trainerId    String?
+  startsAt     DateTime
+  endsAt       DateTime
+  capacity     Int
+  room         String?
+  cancelled    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  featured     Boolean      @default(false)
+  public       Boolean      @default(false)
+  bookings     Booking[]
+  fitnessClass FitnessClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  trainer      Staff?       @relation(fields: [trainerId], references: [id])
+
+  @@index([classId])
+  @@index([trainerId])
+  @@index([startsAt])
+  @@index([public, startsAt])
+}
+
+model Booking {
+  id        String        @id @default(cuid())
+  memberId  String
+  sessionId String
+  status    BookingStatus @default(CONFIRMED)
+  bookedAt  DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  member    Member        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  session   ClassSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, sessionId])
+  @@index([memberId])
+  @@index([sessionId])
+  @@index([status])
+}
+
+model Payment {
+  id          String         @id @default(cuid())
+  memberId    String?
+  amount      Decimal        @db.Decimal(10, 2)
+  currency    String         @default("GBP")
+  status      PaymentStatus  @default(PENDING)
+  method      PaymentMethod?
+  reference   String?        @unique
+  description String?
+  paidAt      DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  member      Member?        @relation(fields: [memberId], references: [id])
+
+  @@index([memberId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  price       Decimal     @db.Decimal(10, 2)
+  stock       Int         @default(0)
+  sku         String?     @unique
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+
+  @@index([active])
+}
+
+model Order {
+  id        String        @id @default(cuid())
+  memberId  String?
+  total     Decimal       @db.Decimal(10, 2)
+  status    PaymentStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  member    Member?       @relation(fields: [memberId], references: [id])
+  items     OrderItem[]
+
+  @@index([memberId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Staff {
+  id             String         @id @default(cuid())
+  firstName      String
+  lastName       String
+  email          String         @unique
+  phone          String?
+  role           StaffRole      @default(TRAINER)
+  active         Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  bio            String?
+  bookingHref    String?        @default("/#contact")
+  featured       Boolean        @default(false)
+  imageUrl       String?
+  instagramUrl   String?
+  jobTitle       String?
+  publicProfile  Boolean        @default(false)
+  qualifications String?
+  showOnHome     Boolean        @default(false)
+  sortOrder      Int            @default(0)
+  specialities   String?
+  sessions       ClassSession[]
+
+  @@index([role])
+  @@index([active])
+  @@index([publicProfile, showOnHome, sortOrder])
+}
+
+model SiteSettings {
+  id             String   @id @default("main")
+  businessName   String   @default("Tankz Fitness")
+  tagline        String?
+  logoUrl        String?
+  faviconUrl     String?
+  phone          String?
+  email          String?
+  address        String?
+  instagramUrl   String?
+  facebookUrl    String?
+  youtubeUrl     String?
+  tiktokUrl      String?
+  footerText     String?
+  primaryCtaText String?  @default("Start Today")
+  primaryCtaHref String?  @default("/#contact")
+  updatedAt      DateTime @updatedAt
+  siteUrl        String?
+}
+
+model HomepageContent {
+  id                   String   @id @default("main")
+  heroEyebrow          String?
+  heroTitle            String   @default("Train with purpose. Transform for life.")
+  heroSubtitle         String?
+  heroPrimaryText      String?  @default("Start Today")
+  heroPrimaryHref      String?  @default("/#contact")
+  heroSecondaryText    String?
+  heroSecondaryHref    String?
+  heroImageUrl         String?
+  heroVisible          Boolean  @default(true)
+  aboutEyebrow         String?
+  aboutTitle           String?
+  aboutBody            String?
+  aboutImageUrl        String?
+  aboutButtonText      String?
+  aboutButtonHref      String?
+  aboutVisible         Boolean  @default(true)
+  servicesEyebrow      String?  @default("Personal training")
+  servicesTitle        String?  @default("Coaching built around your goals")
+  servicesBody         String?
+  servicesVisible      Boolean  @default(true)
+  followEyebrow        String?
+  followTitle          String?
+  followBody           String?
+  followVisible        Boolean  @default(true)
+  updatedAt            DateTime @updatedAt
+  canonicalUrl         String?
+  noIndex              Boolean  @default(false)
+  openGraphDescription String?
+  openGraphImageUrl    String?
+  openGraphTitle       String?
+  seoDescription       String?
+  seoKeywords          String?
+  seoTitle             String?
+  statFourLabel        String?  @default("Client experience")
+  statFourValue        String?  @default("5★")
+  statOneLabel         String?  @default("Personal coaching")
+  statOneValue         String?  @default("1:1")
+  statThreeLabel       String?  @default("Accountability")
+  statThreeValue       String?  @default("24/7")
+  statTwoLabel         String?  @default("Goal focused")
+  statTwoValue         String?  @default("100%")
+  statsEyebrow         String?  @default("Built for measurable progress")
+  statsTitle           String?  @default("Coaching that turns effort into results")
+  statsVisible         Boolean  @default(true)
+}
+
+model WebsitePage {
+  id              String   @id @default(cuid())
+  title           String
+  slug            String   @unique
+  navigationLabel String?
+  excerpt         String?
+  content         String?
+  imageUrl        String?
+  published       Boolean  @default(false)
+  showInHeader    Boolean  @default(false)
+  showInFooter    Boolean  @default(false)
+  headerOrder     Int      @default(0)
+  footerOrder     Int      @default(0)
+  seoTitle        String?
+  seoDescription  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([published])
+  @@index([showInHeader, headerOrder])
+  @@index([showInFooter, footerOrder])
+}
+
+model Testimonial {
+  id         String   @id @default(cuid())
+  clientName String
+  headline   String?
+  quote      String
+  result     String?
+  imageUrl   String?
+  rating     Int      @default(5)
+  featured   Boolean  @default(false)
+  showOnHome Boolean  @default(true)
+  active     Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([active, showOnHome, sortOrder])
+  @@index([featured])
+}
+
+model Transformation {
+  id             String   @id @default(cuid())
+  clientName     String?
+  title          String
+  summary        String?
+  result         String?
+  beforeImageUrl String?
+  afterImageUrl  String?
+  durationLabel  String?
+  featured       Boolean  @default(false)
+  showOnHome     Boolean  @default(true)
+  active         Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([active, showOnHome, sortOrder])
+  @@index([featured])
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+enum MembershipStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+  EXPIRED
+}
+
+enum BookingStatus {
+  CONFIRMED
+  WAITLISTED
+  CANCELLED
+  ATTENDED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  CASH
+  BANK_TRANSFER
+  DIRECT_DEBIT
+  OTHER
+}
+
+enum StaffRole {
+  ADMIN
+  MANAGER
+  TRAINER
+  RECEPTION
+}
+
+enum ClientGoal {
+  WEIGHT_LOSS
+  MUSCLE_GAIN
+  GENERAL_FITNESS
+  STRENGTH
+  SPORTS_PERFORMANCE
+  MOBILITY
+  REHABILITATION
+  OTHER
+}
+
+model GalleryImage {
+  id         String   @id @default(cuid())
+  title      String?
+  caption    String?
+  category   String?
+  imageUrl   String
+  altText    String?
+  featured   Boolean  @default(false)
+  showOnHome Boolean  @default(true)
+  active     Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([active, showOnHome, sortOrder])
+  @@index([featured])
+  @@index([category])
+}
+
+model FrequentlyAskedQuestion {
+  id         String   @id @default(cuid())
+  question   String
+  answer     String
+  category   String?
+  featured   Boolean  @default(false)
+  showOnHome Boolean  @default(true)
+  active     Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([active, showOnHome, sortOrder])
+  @@index([featured])
+  @@index([category])
+}
+
+enum HeroBackgroundType {
+  IMAGE
+  VIDEO
+}
+
+model HomepageHero {
+  id String @id @default("main")
+
+  title           String
+  highlightedWord String?
+  subtitle        String?
+
+  primaryButtonText String @default("Start Today")
+  primaryButtonLink String @default("/#contact")
+
+  secondaryButtonText String?
+  secondaryButtonLink String?
+
+  backgroundType HeroBackgroundType @default(IMAGE)
+
+  backgroundImageUrl String?
+  backgroundVideoUrl String?
+
+  overlayOpacity Int @default(65)
+
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stats  HeroStat[]
+  badges HeroBadge[]
+}
+
+model HeroStat {
+  id String @id @default(cuid())
+
+  heroId String
+
+  label String
+  value String
+
+  sortOrder Int @default(0)
+
+  hero HomepageHero @relation(fields: [heroId], references: [id], onDelete: Cascade)
+
+  @@index([heroId])
+}
+
+model HeroBadge {
+  id String @id @default(cuid())
+
+  heroId String
+
+  text String
+
+  sortOrder Int @default(0)
+
+  hero HomepageHero @relation(fields: [heroId], references: [id], onDelete: Cascade)
+
+  @@index([heroId])
+}
+
+model Lead {
+  id String @id @default(cuid())
+
+  firstName String
+  lastName  String?
+  email     String
+  phone     String?
+
+  goal    String?
+  subject String?
+  message String
+
+  status LeadStatus @default(NEW)
+
+  assignedTo String?
+
+  notes String?
+
+  converted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  BOOKED
+  WON
+  LOST
+}
