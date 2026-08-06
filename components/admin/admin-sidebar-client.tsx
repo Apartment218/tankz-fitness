@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type NavigationItem = {
   name: string;
@@ -140,7 +140,11 @@ const navigationGroups: NavigationGroup[] = [
   },
 ];
 
-function isActivePath(pathname: string, href: string) {
+const allNavigationItems = navigationGroups.flatMap(
+  (group) => group.items,
+);
+
+function routeMatches(pathname: string, href: string) {
   if (href === "/admin") {
     return pathname === "/admin";
   }
@@ -152,13 +156,12 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function groupContainsActivePath(
-  pathname: string,
-  group: NavigationGroup,
-) {
-  return group.items.some((item) =>
-    isActivePath(pathname, item.href),
-  );
+function getActiveHref(pathname: string) {
+  const matchingItems = allNavigationItems
+    .filter((item) => routeMatches(pathname, item.href))
+    .sort((first, second) => second.href.length - first.href.length);
+
+  return matchingItems[0]?.href ?? null;
 }
 
 function ChevronIcon({
@@ -225,6 +228,11 @@ function CloseIcon() {
 export function AdminSidebarClient() {
   const pathname = usePathname();
 
+  const activeHref = useMemo(
+    () => getActiveHref(pathname),
+    [pathname],
+  );
+
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const [openGroups, setOpenGroups] = useState<
@@ -233,7 +241,9 @@ export function AdminSidebarClient() {
     Object.fromEntries(
       navigationGroups.map((group) => [
         group.name,
-        groupContainsActivePath(pathname, group),
+        group.items.some(
+          (item) => item.href === getActiveHref(pathname),
+        ),
       ]),
     ),
   );
@@ -241,6 +251,24 @@ export function AdminSidebarClient() {
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    setOpenGroups((current) => {
+      const next = { ...current };
+
+      navigationGroups.forEach((group) => {
+        const containsActiveItem = group.items.some(
+          (item) => item.href === activeHref,
+        );
+
+        if (containsActiveItem) {
+          next[group.name] = true;
+        }
+      });
+
+      return next;
+    });
+  }, [activeHref]);
 
   useEffect(() => {
     if (!mobileOpen) {
@@ -262,15 +290,15 @@ export function AdminSidebarClient() {
     }));
   }
 
-  function renderNavigation(
-    mobile = false,
-  ) {
+  function renderNavigation(mobile = false) {
+    const dashboardActive = pathname === "/admin";
+
     return (
       <>
         <Link
           href="/admin"
           className={`mb-3 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition ${
-            isActivePath(pathname, "/admin")
+            dashboardActive
               ? "bg-red-600 text-white"
               : mobile
                 ? "text-zinc-700 hover:bg-zinc-100"
@@ -283,8 +311,9 @@ export function AdminSidebarClient() {
 
         <div className="space-y-2">
           {navigationGroups.map((group) => {
-            const activeGroup =
-              groupContainsActivePath(pathname, group);
+            const activeGroup = group.items.some(
+              (item) => item.href === activeHref,
+            );
 
             const open =
               openGroups[group.name] || activeGroup;
@@ -335,10 +364,8 @@ export function AdminSidebarClient() {
                     }`}
                   >
                     {group.items.map((item) => {
-                      const active = isActivePath(
-                        pathname,
-                        item.href,
-                      );
+                      const active =
+                        item.href === activeHref;
 
                       return (
                         <Link
