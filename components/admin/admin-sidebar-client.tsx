@@ -87,9 +87,9 @@ const navigationGroups: NavigationGroup[] = [
         href: "/admin/website/faq",
       },
       {
-        name: "Contact page",
-        href: "/contact",
-      },
+  name: "Contact enquiries",
+  href: "/admin/leads",
+},
       {
         name: "Website settings",
         href: "/admin/website/settings",
