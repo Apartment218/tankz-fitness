@@ -256,6 +256,49 @@ model SiteSettings {
   siteUrl        String?
 }
 
+model ContactPageContent {
+  id String @id @default("main")
+
+  heroEyebrow String @default("Contact Tankz Fitness")
+  heroTitle   String @default("Your strongest chapter starts with one conversation.")
+  heroBody    String @default("Tell us where you are now, where you want to go and what has been holding you back. We will help you choose the right coaching path.")
+
+  highlightOne   String @default("Personal training")
+  highlightTwo   String @default("Online coaching")
+  highlightThree String @default("Strength and fat loss")
+
+  stepsEyebrow String @default("What happens next?")
+
+  stepOneTitle String @default("We review your goals")
+  stepOneBody  String @default("Your enquiry arrives directly in Tankz HQ so it is never lost in a crowded inbox.")
+
+  stepTwoTitle String @default("We contact you")
+  stepTwoBody  String @default("A coach will get in touch to learn more about your experience, schedule and ambitions.")
+
+  stepThreeTitle String @default("We build the right plan")
+  stepThreeBody  String @default("You will get a clear recommendation based on the level of support you actually need.")
+
+  coachingPrompt     String @default("Ready to subscribe immediately?")
+  coachingButtonText String @default("View monthly coaching")
+  coachingButtonHref String @default("/services")
+
+  formEyebrow String @default("Start the conversation")
+  formTitle   String @default("Tell us what you want to achieve.")
+  formBody    String @default("Complete the form and your enquiry will be added directly to our lead management system.")
+
+  successTitle String @default("Your message has been sent.")
+  successBody  String @default("Thank you for contacting Tankz Fitness. A member of the team will be in touch.")
+
+  consentText String @default("By submitting this form, you agree that Tankz Fitness may contact you about your enquiry.")
+
+  mapEmbedUrl String?
+
+  seoTitle       String?
+  seoDescription String?
+
+  updatedAt DateTime @updatedAt
+}
+
 model HomepageContent {
   id                   String   @id @default("main")
   heroEyebrow          String?

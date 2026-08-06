@@ -1,0 +1,32 @@
+-- CreateTable
+CREATE TABLE "ContactPageContent" (
+    "id" TEXT NOT NULL DEFAULT 'main',
+    "heroEyebrow" TEXT NOT NULL DEFAULT 'Contact Tankz Fitness',
+    "heroTitle" TEXT NOT NULL DEFAULT 'Your strongest chapter starts with one conversation.',
+    "heroBody" TEXT NOT NULL DEFAULT 'Tell us where you are now, where you want to go and what has been holding you back. We will help you choose the right coaching path.',
+    "highlightOne" TEXT NOT NULL DEFAULT 'Personal training',
+    "highlightTwo" TEXT NOT NULL DEFAULT 'Online coaching',
+    "highlightThree" TEXT NOT NULL DEFAULT 'Strength and fat loss',
+    "stepsEyebrow" TEXT NOT NULL DEFAULT 'What happens next?',
+    "stepOneTitle" TEXT NOT NULL DEFAULT 'We review your goals',
+    "stepOneBody" TEXT NOT NULL DEFAULT 'Your enquiry arrives directly in Tankz HQ so it is never lost in a crowded inbox.',
+    "stepTwoTitle" TEXT NOT NULL DEFAULT 'We contact you',
+    "stepTwoBody" TEXT NOT NULL DEFAULT 'A coach will get in touch to learn more about your experience, schedule and ambitions.',
+    "stepThreeTitle" TEXT NOT NULL DEFAULT 'We build the right plan',
+    "stepThreeBody" TEXT NOT NULL DEFAULT 'You will get a clear recommendation based on the level of support you actually need.',
+    "coachingPrompt" TEXT NOT NULL DEFAULT 'Ready to subscribe immediately?',
+    "coachingButtonText" TEXT NOT NULL DEFAULT 'View monthly coaching',
+    "coachingButtonHref" TEXT NOT NULL DEFAULT '/services',
+    "formEyebrow" TEXT NOT NULL DEFAULT 'Start the conversation',
+    "formTitle" TEXT NOT NULL DEFAULT 'Tell us what you want to achieve.',
+    "formBody" TEXT NOT NULL DEFAULT 'Complete the form and your enquiry will be added directly to our lead management system.',
+    "successTitle" TEXT NOT NULL DEFAULT 'Your message has been sent.',
+    "successBody" TEXT NOT NULL DEFAULT 'Thank you for contacting Tankz Fitness. A member of the team will be in touch.',
+    "consentText" TEXT NOT NULL DEFAULT 'By submitting this form, you agree that Tankz Fitness may contact you about your enquiry.',
+    "mapEmbedUrl" TEXT,
+    "seoTitle" TEXT,
+    "seoDescription" TEXT,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ContactPageContent_pkey" PRIMARY KEY ("id")
+);

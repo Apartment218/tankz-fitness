@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 type NavigationItem = {
   name: string;
@@ -87,8 +87,8 @@ const navigationGroups: NavigationGroup[] = [
         href: "/admin/website/faq",
       },
       {
-  name: "Contact enquiries",
-  href: "/admin/leads",
+  name: "Contact page",
+  href: "/admin/website/contact",
 },
       {
         name: "Website settings",
@@ -140,28 +140,25 @@ const navigationGroups: NavigationGroup[] = [
   },
 ];
 
-const allNavigationItems = navigationGroups.flatMap(
-  (group) => group.items,
-);
-
-function routeMatches(pathname: string, href: string) {
+function isActivePath(pathname: string, href: string) {
   if (href === "/admin") {
     return pathname === "/admin";
   }
 
-  if (href === "/contact") {
+  if (href === "/admin/website/contact") {
     return pathname === "/contact";
   }
 
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function getActiveHref(pathname: string) {
-  const matchingItems = allNavigationItems
-    .filter((item) => routeMatches(pathname, item.href))
-    .sort((first, second) => second.href.length - first.href.length);
-
-  return matchingItems[0]?.href ?? null;
+function groupContainsActivePath(
+  pathname: string,
+  group: NavigationGroup,
+) {
+  return group.items.some((item) =>
+    isActivePath(pathname, item.href),
+  );
 }
 
 function ChevronIcon({
@@ -228,11 +225,6 @@ function CloseIcon() {
 export function AdminSidebarClient() {
   const pathname = usePathname();
 
-  const activeHref = useMemo(
-    () => getActiveHref(pathname),
-    [pathname],
-  );
-
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const [openGroups, setOpenGroups] = useState<
@@ -241,9 +233,7 @@ export function AdminSidebarClient() {
     Object.fromEntries(
       navigationGroups.map((group) => [
         group.name,
-        group.items.some(
-          (item) => item.href === getActiveHref(pathname),
-        ),
+        groupContainsActivePath(pathname, group),
       ]),
     ),
   );
@@ -251,24 +241,6 @@ export function AdminSidebarClient() {
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
-
-  useEffect(() => {
-    setOpenGroups((current) => {
-      const next = { ...current };
-
-      navigationGroups.forEach((group) => {
-        const containsActiveItem = group.items.some(
-          (item) => item.href === activeHref,
-        );
-
-        if (containsActiveItem) {
-          next[group.name] = true;
-        }
-      });
-
-      return next;
-    });
-  }, [activeHref]);
 
   useEffect(() => {
     if (!mobileOpen) {
@@ -290,15 +262,15 @@ export function AdminSidebarClient() {
     }));
   }
 
-  function renderNavigation(mobile = false) {
-    const dashboardActive = pathname === "/admin";
-
+  function renderNavigation(
+    mobile = false,
+  ) {
     return (
       <>
         <Link
           href="/admin"
           className={`mb-3 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition ${
-            dashboardActive
+            isActivePath(pathname, "/admin")
               ? "bg-red-600 text-white"
               : mobile
                 ? "text-zinc-700 hover:bg-zinc-100"
@@ -311,9 +283,8 @@ export function AdminSidebarClient() {
 
         <div className="space-y-2">
           {navigationGroups.map((group) => {
-            const activeGroup = group.items.some(
-              (item) => item.href === activeHref,
-            );
+            const activeGroup =
+              groupContainsActivePath(pathname, group);
 
             const open =
               openGroups[group.name] || activeGroup;
@@ -364,8 +335,10 @@ export function AdminSidebarClient() {
                     }`}
                   >
                     {group.items.map((item) => {
-                      const active =
-                        item.href === activeHref;
+                      const active = isActivePath(
+                        pathname,
+                        item.href,
+                      );
 
                       return (
                         <Link
